@@ -544,12 +544,16 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`\n📝 Available endpoints:`);
-  console.log(`   GET  http://localhost:${PORT}/api/health-check`);
-  console.log(`   GET  http://localhost:${PORT}/api/db-test`);
-  console.log(`   POST http://localhost:${PORT}/api/auth/firebase-register`);
-  console.log(`   POST http://localhost:${PORT}/api/auth/verify-firebase`);
-  console.log(`   GET  http://localhost:${PORT}/api/auth/me`);
-  console.log(`   POST http://localhost:${PORT}/api/sessions`);
-  console.log(`   GET  http://localhost:${PORT}/api/sessions`);
-  console.log(`   GET  http://localhost:${PORT}/api/preferences`);
+  console.log(`   GET  https://massagebe.onrender.com/api/health-check`);
+  console.log(`   GET  https://massagebe.onrender.com/api/db-test`);
+  console.log(
+    `   POST https://massagebe.onrender.com/api/auth/firebase-register`,
+  );
+  console.log(
+    `   POST https://massagebe.onrender.com/api/auth/verify-firebase`,
+  );
+  console.log(`   GET  https://massagebe.onrender.com/api/auth/me`);
+  console.log(`   POST https://massagebe.onrender.com/api/sessions`);
+  console.log(`   GET  https://massagebe.onrender.com/api/sessions`);
+  console.log(`   GET  https://massagebe.onrender.com/api/preferences`);
 });
