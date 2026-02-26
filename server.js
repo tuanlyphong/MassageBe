@@ -2,7 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const admin = require("firebase-admin");
-const { query, poor } = require("./config/database");
+const { query, pool } = require("./config/database");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
