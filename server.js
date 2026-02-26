@@ -1,27 +1,16 @@
-// server.js - Complete Node.js Backend for Massage App
+// server.js
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
 const admin = require("firebase-admin");
+const { query } = require("./config/database");
 
-// Initialize Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// PostgreSQL Connection
-const { Pool } = require("pg");
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-
-module.exports = pool;
-// Initialize Firebase Admin (Download serviceAccountKey.json from Firebase Console)
+// Initialize Firebase Admin
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
@@ -32,9 +21,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   console.log("✅ Firebase Admin initialized");
 } else {
   console.log("⚠️ Firebase Admin not initialized");
-}
-
-// ========== Middleware: Verify Firebase Token ==========
+} // ========== Middleware: Verify Firebase Token ==========
 const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;

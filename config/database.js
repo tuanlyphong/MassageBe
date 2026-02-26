@@ -1,10 +1,13 @@
+// config/database.js
 const { Pool } = require("pg");
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },
 });
+
 pool.on("connect", () => {
   console.log("✅ Connected to PostgreSQL database");
 });
@@ -18,7 +21,11 @@ const query = async (text, params) => {
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log("Query executed", { text, duration, rows: res.rowCount });
+    console.log("Query executed", {
+      text,
+      duration,
+      rows: res.rowCount,
+    });
     return res;
   } catch (error) {
     console.error("Database query error:", error);
@@ -26,4 +33,7 @@ const query = async (text, params) => {
   }
 };
 
-module.exports = { query, pool };
+module.exports = {
+  pool,
+  query,
+};
