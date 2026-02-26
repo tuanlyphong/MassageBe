@@ -13,14 +13,14 @@ app.use(cors());
 app.use(express.json());
 
 // PostgreSQL Connection
+const { Pool } = require("pg");
+
 const pool = new Pool({
-  user: process.env.DB_USER || "postgres",
-  host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "massage_device_db",
-  password: process.env.DB_PASSWORD || "your_password",
-  port: process.env.DB_PORT || 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
+module.exports = pool;
 // Initialize Firebase Admin (Download serviceAccountKey.json from Firebase Console)
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
