@@ -307,7 +307,7 @@ app.get("/api/sessions", verifyToken, async (req, res) => {
   }
 });
 
-// Get session statistics
+// Get session statistics — must be BEFORE /sessions/:id
 app.get("/api/sessions/statistics", verifyToken, async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
@@ -331,8 +331,8 @@ app.get("/api/sessions/statistics", verifyToken, async (req, res) => {
         AVG(level) as avg_level,
         SUM(CASE WHEN heat_enabled THEN 1 ELSE 0 END)::float / COUNT(*)::float * 100 as heat_usage_percent
        FROM massage_sessions 
-       WHERE user_id = $1 AND started_at >= NOW() - INTERVAL '${days} days'`,
-      [userId],
+       WHERE user_id = $1 AND started_at >= NOW() - ($2 * INTERVAL '1 day')`,
+      [userId, days],
     );
 
     const stats = result.rows[0];
@@ -348,6 +348,79 @@ app.get("/api/sessions/statistics", verifyToken, async (req, res) => {
         dateRange: days,
       },
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get session by ID
+app.get("/api/sessions/:id", verifyToken, async (req, res) => {
+  try {
+    const userResult = await pool.query(
+      "SELECT user_id FROM users WHERE firebase_uid = $1",
+      [req.user.firebaseUid],
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const userId = userResult.rows[0].user_id;
+
+    const result = await pool.query(
+      `SELECT session_id, level, duration, heat_enabled as "heatEnabled",
+              rotate_enabled as "rotateEnabled", calories_burned as "caloriesBurned",
+              notes, started_at as "startedAt", ended_at as "endedAt"
+       FROM massage_sessions WHERE session_id = $1 AND user_id = $2`,
+      [req.params.id, userId],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    res.json({ success: true, session: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update session notes
+app.put("/api/sessions/:id", verifyToken, async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const userResult = await pool.query(
+      "SELECT user_id FROM users WHERE firebase_uid = $1",
+      [req.user.firebaseUid],
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const userId = userResult.rows[0].user_id;
+
+    await pool.query(
+      "UPDATE massage_sessions SET notes = $1 WHERE session_id = $2 AND user_id = $3",
+      [notes, req.params.id, userId],
+    );
+    res.json({ success: true, message: "Session updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete session
+app.delete("/api/sessions/:id", verifyToken, async (req, res) => {
+  try {
+    const userResult = await pool.query(
+      "SELECT user_id FROM users WHERE firebase_uid = $1",
+      [req.user.firebaseUid],
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const userId = userResult.rows[0].user_id;
+
+    await pool.query(
+      "DELETE FROM massage_sessions WHERE session_id = $1 AND user_id = $2",
+      [req.params.id, userId],
+    );
+    res.json({ success: true, message: "Session deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -464,6 +537,11 @@ app.put("/api/preferences", verifyToken, async (req, res) => {
 
     updates.push(`updated_at = NOW()`);
     values.push(userId);
+
+    // Guard: only updated_at means no real fields were sent
+    if (updates.length === 1) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
 
     const query = `UPDATE preferences SET ${updates.join(", ")} WHERE user_id = $${paramCount}`;
 
